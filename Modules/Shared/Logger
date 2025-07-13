@@ -1,0 +1,53 @@
+local Logger = {}
+Logger.__index = Logger
+
+-- Log levels
+Logger.Levels = {
+	DEBUG = 1,
+	INFO = 2,
+	WARN = 3,
+	ERROR = 4,
+}
+
+-- Default minimum level to show
+Logger.MinLevel = Logger.Levels.INFO
+Logger.DebugEnabled = false -- set to true to show debug logs
+
+function Logger:SetMinLevel(level)
+	self.MinLevel = level
+end
+
+function Logger:EnableDebug(enable)
+	self.DebugEnabled = enable
+	if enable then
+		self.MinLevel = self.Levels.DEBUG
+	end
+end
+
+function Logger:FormatMessage(levelName, message)
+	return string.format("[Aurora][%s] %s", levelName, message)
+end
+
+function Logger:Log(level, levelName, message)
+	if level < self.MinLevel then return end
+	print(self:FormatMessage(levelName, message))
+end
+
+function Logger:Debug(message)
+	if not self.DebugEnabled then return end
+	self:Log(self.Levels.DEBUG, "DEBUG", message)
+end
+
+function Logger:Info(message)
+	self:Log(self.Levels.INFO, "INFO", message)
+end
+
+function Logger:Warn(message)
+	self:Log(self.Levels.WARN, "WARN", message)
+end
+
+function Logger:Error(message)
+	self:Log(self.Levels.ERROR, "ERROR", message)
+end
+
+return Logger
