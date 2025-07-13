@@ -79,7 +79,7 @@ Handles all RemoteEvents and RemoteFunctions for you. Lets you easily register f
 
 How to use it:
 
-```Init() — Prepare the messaging system.```
+```Init(Aurora) — Prepare the messaging system.```
 
 ```RegisterFunction(name, fn) — Register a function on the server that clients can call.```
 
