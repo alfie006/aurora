@@ -1,126 +1,130 @@
-# Aurora Framework API Documentation
+Aurora Framework — API Guide
+What is Aurora?
+Aurora is a Roblox framework designed to make your life easier by handling common tasks like server-client communication, player data saving/loading, and logging. It’s modular, meaning you can add or remove parts easily, and it automatically handles loading modules depending on whether the code is running on the server, client, or both.
 
----
+Modules Overview
+1. Aurora (Main Loader)
+What it does:
+This is the heart of the system. It loads your shared, server-only, and client-only modules and initializes them with any settings you want.
 
-## Overview
+How to use it:
 
-Aurora is a modular Roblox framework designed for scalable server-client communication, data management, and logging. It supports server-only, client-only, and shared modules, and includes a Messaging system for RemoteEvents and RemoteFunctions.
+lua
+Copy
+Edit
+local Aurora = require(ReplicatedStorage.Aurora)
 
----
+local settings = {
+    Logger = { debug = true },      -- Turn on debug logs
+    DataService = { defaultData = { coins = 0 } },  -- Set default player data
+}
 
-## Modules
+Aurora:Init(settings)  -- Start everything up
+2. DataService (Player Data Management)
+What it does:
+Loads and saves player data automatically, keeps it cached in memory, and saves it regularly so players don’t lose progress.
 
-### Aurora
+Key functions:
 
-#### `Aurora:Init(settings)`
+Init(Aurora, defaultData) — Set up the data service with default player data.
 
-Initializes the Aurora framework by loading and initializing all modules in the appropriate folders based on whether the environment is server or client.
+Load(player) — Load the player’s saved data.
 
-- **Parameters:**
-  - `settings` *(table, optional)* — Configuration for individual modules.
+Get(player) — Get the cached data for a player.
 
----
+Save(player) — Save a player’s data, with built-in cooldowns so you don’t overload Roblox DataStores.
 
-### DataService
+AutoSaveAll() — Saves all player data (usually runs automatically every 5 minutes).
 
-Handles player data loading, caching, saving, and autosaving using Roblox DataStores.
+Example usage:
 
-#### Methods
+lua
+Copy
+Edit
+local DataService = Aurora.Modules.DataService
+local Players = game:GetService("Players")
 
-- **`DataService:Init(Aurora, defaultData)`**
+Players.PlayerAdded:Connect(function(player)
+    DataService:Load(player)  -- Load data when player joins
+end)
 
-  Initializes the DataService module.
+-- Update player data example
+local data = DataService:Get(player)
+data.coins = (data.coins or 0) + 100  -- Give player 100 coins
+DataService:Save(player)  -- Save updated data
+3. Logger (Easy Logging)
+What it does:
+Helps you print messages to the console with different levels like debug, info, warning, and error. You can toggle debug messages on or off.
 
-  - `Aurora` — Reference to the Aurora framework instance.
-  - `defaultData` *(table, optional)* — Default data template for new players.
+Key functions:
 
-- **`DataService:Load(player)`**
+SetMinLevel(level) — Set the minimum level of logs you want to see.
 
-  Loads player data from the DataStore or returns default data if none exists.
+EnableDebug(true/false) — Turn debug logging on or off.
 
-  - `player` — The player instance whose data to load.
+Debug(message), Info(message), Warn(message), Error(message) — Different ways to log your messages.
 
-- **`DataService:Get(player)`**
+Example usage:
 
-  Returns cached data for the given player.
+lua
+Copy
+Edit
+local Logger = Aurora.Modules.Logger
+Logger:EnableDebug(true)  -- Turn on debug messages
 
-- **`DataService:Save(player)`**
+Logger:Info("Game started")
+Logger:Debug("Loading player stats...")
+Logger:Warn("Low health warning!")
+Logger:Error("Something went wrong!")
+4. Messaging (Server-Client Communication Made Simple)
+What it does:
+Handles all RemoteEvents and RemoteFunctions for you. Lets you easily register functions that clients or servers can call, bind event listeners, and fire events across the network.
 
-  Saves the cached player data to the DataStore with a cooldown to prevent spamming saves.
+How to use it:
 
-- **`DataService:AutoSaveAll()`**
+Init() — Prepare the messaging system.
 
-  Saves data for all cached players.
+RegisterFunction(name, fn) — Register a function on the server that clients can call.
 
----
+CallFunction(name, ...) — Call a registered function (on the same machine or over the network).
 
-### Logger
+BindEvent(eventName, callback) — Listen for an event.
 
-Provides structured logging with log levels: DEBUG, INFO, WARN, ERROR.
+FireEvent(eventName, ...) — Send an event to everyone or the server.
 
-#### Methods
+Example — Server script:
 
-- **`Logger:SetMinLevel(level)`**
+lua
+Copy
+Edit
+local Messaging = Aurora.Modules.Messaging
 
-  Sets the minimum log level to display.
+-- Register a function clients can call
+Messaging:RegisterFunction("AddNumbers", function(player, a, b)
+    print(player.Name, "called AddNumbers with", a, b)
+    return a + b
+end)
 
-- **`Logger:EnableDebug(enable)`**
+-- Listen for a shout event from clients
+Messaging:BindEvent("PlayerShout", function(player, message)
+    print(player.Name, "shouted:", message)
+    Messaging:FireEvent("BroadcastShout", player.Name, message)
+end)
+Example — Client script:
 
-  Enables or disables debug-level logging.
+lua
+Copy
+Edit
+local Messaging = Aurora.Modules.Messaging
 
-- **`Logger:Debug(message)`**
+-- Call the server function
+local sum = Messaging:CallFunction("AddNumbers", 5, 10)
+print("Sum from server:", sum)
 
-  Logs a debug message (shown only if debug is enabled).
+-- Listen for broadcast shouts from server
+Messaging:BindEvent("BroadcastShout", function(playerName, message)
+    print(playerName .. " says:", message)
+end)
 
-- **`Logger:Info(message)`**
-
-  Logs an informational message.
-
-- **`Logger:Warn(message)`**
-
-  Logs a warning message.
-
-- **`Logger:Error(message)`**
-
-  Logs an error message.
-
----
-
-### Messaging
-
-A robust messaging system that wraps Roblox RemoteEvents and RemoteFunctions for server-client communication.
-
-#### Methods
-
-- **`Messaging:Init()`**
-
-  Initializes the messaging system.
-
-- **`Messaging:RegisterFunction(name, fn)`**
-
-  Registers a server function callable by clients.
-
-  - `name` *(string)* — Function identifier.
-  - `fn` *(function)* — The function to execute.
-
-- **`Messaging:CallFunction(name, ...)`**
-
-  Calls a registered function. If called on client, invokes the server function via RemoteFunction.
-
-- **`Messaging:BindEvent(eventName, callback)`**
-
-  Binds a callback to a named RemoteEvent.
-
-- **`Messaging:FireEvent(eventName, ...)`**
-
-  Fires a RemoteEvent to the other side (server to clients or client to server).
-
----
-
-## Examples
-
-### Initialize Aurora
-
-```lua
-local Aurora = require(game.ReplicatedStorage.Aurora)
-Aurora:Init()
+-- Send a shout to the server
+Messaging:FireEvent("PlayerShout", "Hello everyone!")
