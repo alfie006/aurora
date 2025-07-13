@@ -137,4 +137,4 @@ This API offers:
 -   Server-client remote communication (Messaging)
     
 
-Feel free to extend modules or add new ones in the `Modules` folder, Aurora has built in automatic initialization features which will run the ```?:Init()``` as soon as ```Aurora:Init()``` is called.
+Feel free to extend modules or add new ones in the `Modules` folder, Aurora has built in automatic initialization features which will run the ```Init()``` function on any module as soon as ```Aurora:Init()``` is called.
