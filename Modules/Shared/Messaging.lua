@@ -25,14 +25,11 @@ end
 local Messaging = {}
 Messaging.__index = Messaging
 
-function Messaging:Init()
+function Messaging:Init(Aurora)
 	self._events = {}
 	self._functions = {}
 	self._remoteEventsInitialized = {}
-	self.Logger = {
-		Warn = function(_, msg) print("[Warn]", msg) end,
-		Info = function(_, msg) print("[Info]", msg) end,
-	}
+	self.Logger = Aurora.Modules.Logger
 end
 
 local function getOrCreateRemoteEvent(name)
